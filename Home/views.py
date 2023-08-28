@@ -8,7 +8,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.core.paginator import Paginator
-# Create your views here.
+# Crud of Blog 
 class BlogApi(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]

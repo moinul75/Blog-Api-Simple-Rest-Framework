@@ -14,7 +14,7 @@ from pathlib import Path
 import dj_database_url
 import os
 
-DATABASE_URL = 'postgresql://postgres:PAKeOVqNPJzqOMsniFfG@containers-us-west-85.railway.app:5531/railway'
+# DATABASE_URL = 'postgresql://postgres:PAKeOVqNPJzqOMsniFfG@containers-us-west-85.railway.app:5531/railway'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Account',
     'Home',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -80,7 +81,10 @@ WSGI_APPLICATION = 'Blog.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(default=DATABASE_URL,conn_max_age=1800),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
