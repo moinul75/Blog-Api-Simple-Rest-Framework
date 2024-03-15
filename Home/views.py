@@ -1,171 +1,110 @@
-from django.shortcuts import render
-from .models import Blog
-from .serializers import blogSerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response 
-from rest_framework import status
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q
-from django.core.paginator import Paginator
-# Crud of Blog 
-class BlogApi(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
-    def post(self,request):
-        data = request.data 
-        data['user'] = request.user.id
-        serializer = blogSerializer(data=data)
-        try:
-            if not serializer.is_valid():
-                return Response(
-                    {
-                        'data':serializer.errors,
-                        'message':'Something is went Wrong'
-                    },status=status.HTTP_400_BAD_REQUEST
-                )
-            else:
-                serializer.save()
-                return Response(
-                    {
-                        'data':serializer.data,
-                        'message':'Successfully Created Posts'
-                    },status=status.HTTP_201_CREATED
-                )
-        except Exception as e: 
-            print(e)
-            return Response(
-                {
-                    'data':serializer.errors,
-                    'message':'Something is went Wrong..'
-                },status=status.HTTP_400_BAD_REQUEST
-            )
-    def get(self,request):
-        try:
-            blog = Blog.objects.filter(user=request.user)
-            #for specific query search 
-            if request.GET.get('search'):
-                search = request.GET.get('search')
-                blog = blog.filter(Q(title__icontains = search)| Q(blog_text__icontains=search))
-            serializer = blogSerializer(blog,many=True)
-            return Response(
-                {
-                    'data':serializer.data,
-                    'message':'Successfully get ALL the Blog'
-                },status=status.HTTP_201_CREATED
-            )
-        except Exception as e:
-            print(e)
-            return Response(
-                {
-                    'data':serializer.errors,
-                    'message':'Somethinng is went Wrong...'
-                },status=status.HTTP_400_BAD_REQUEST
-            )
-    def patch(self,request):
-        try:
-            #get the data 
-            data = request.data 
-            blog = Blog.objects.filter(uid=data.get('uid'))
-            #if not the blog exits 
-            if not blog.exists:
-                return Response(
-                    {
-                        'data':{},
-                        'message':'Invalid Blogs uid'
-                    },status=status.HTTP_400_BAD_REQUEST
-                )
-            #if its not the right user 
-            if request.user != blog[0].user:
-                return Response(
-                    {
-                        'data':{},
-                        "message":'you are not allowed to update this blog'
-                    },status=status.HTTP_400_BAD_REQUEST
-                )
-            serializer = blogSerializer(blog[0],data=data,partial=True)
-            if not serializer.is_valid():
-                return Response(
-                    {
-                        'data':serializer.errors,
-                        'message':'Something went Wrong...'
-                    },status=status.HTTP_400_BAD_REQUEST
-                )
-            serializer.save()
-            return Response(
-                {
-                    'data':serializer.data,
-                    'message':'Blog is updated Successfully..'
-                },status=status.HTTP_200_OK
-            )
-            
-        except Exception as e:
-            print(e)
-            return Response(
-                {
-                    'data':{},
-                    'message':'Something is went Wrong...'
-                },status=status.HTTP_400_BAD_REQUEST
-            )
-    def delete(self,request):
-        try:
-            data = request.data 
-            blog = Blog.objects.filter(uid=data['uid'])
-            if not blog.exists:
-                return Response(
-                    {
-                        'data':{},
-                        'message':'The Blog is Not exists'
-                    },status=status.HTTP_400_BAD_REQUEST
-                )
-            if request.user != blog[0].user:
-                return Response(
-                    {
-                        'data':{},
-                        'message': 'You are not allowed to Delete This Blog'
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            blog[0].delete()
-            return Response(
-                {
-                    'data':{},
-                    "message":'Successfully Delete the Blog...'
-                },status=status.HTTP_200_OK
-            )
-        except Exception as e:
-            print(e)
-            return Response(
-                {
-                    'data':{},
-                    'message':'Something went wrong...'
-                },status=status.HTTP_400_BAD_REQUEST
-            )
+from rest_framework import generics, permissions,pagination,filters
+from .models import Category, Tag, Image, Blog, Reaction, Comment, Reply, BlogReadingTime, BlogWatchTime
+from .serializers import CategorySerializer, TagSerializer, ImageSerializer, BlogSerializer, ReactionSerializer, CommentSerializer, ReplySerializer, BlogReadingTimeSerializer, BlogWatchTimeSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+
+class CustomPagination(pagination.PageNumberPagination):
+    page_size = 1  # Number of items per page
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+    page_query_param = 'page'
+class TagListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class TagRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class ImageListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class ImageRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Image.objects.all()
+    serializer_class = ImageSerializer
+
+class CategoryListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer 
+    def get_permissions(self):
+        if self.request.method == 'GET': 
+            return []
+        else: 
+            return [permissions.IsAuthenticated()] 
+
+class CategoryRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class BlogListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer 
+    search_fields = ['title', 'blog_text']
+    filter_backends = [filters.SearchFilter] 
+    pagination_class = CustomPagination
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return []
+        else:
+            return [permissions.IsAuthenticated()]
+
+class BlogRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer 
+    permission_classes = [permissions.IsAuthenticated] 
     
-#create Public View 
-class PublicApi(APIView):
-    def get(self,request):
-        try:
-            blog = Blog.objects.all().order_by('?')
-            #for specific query search 
-            if request.GET.get('search'):
-                search = request.GET.get('search')
-                blog = blog.filter(Q(title__icontains = search)| Q(blog_text__icontains=search))
-            page_number = request.GET.get('page',1)
-            paginator = Paginator(blog, 5)
-            serializer = blogSerializer(paginator.page(page_number),many=True)
-            return Response(
-                {
-                    'data':serializer.data,
-                    'message':'Successfully get ALL the Blog'
-                },status=status.HTTP_201_CREATED
-            )
-        except Exception as e:
-            print(e)
-            return Response(
-                {
-                    'data':{},
-                    'message':'Invalid Page Number'
-                },status=status.HTTP_400_BAD_REQUEST
-            )
-        
+
+class ReactionListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Reaction.objects.all()
+    serializer_class = ReactionSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class ReactionRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Reaction.objects.all()
+    serializer_class = ReactionSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class CommentListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class CommentRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class ReplyListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Reply.objects.all()
+    serializer_class = ReplySerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class ReplyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Reply.objects.all()
+    serializer_class = ReplySerializer
+
+class BlogReadingTimeListCreateAPIView(generics.ListCreateAPIView):
+    queryset = BlogReadingTime.objects.all()
+    serializer_class = BlogReadingTimeSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class BlogReadingTimeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = BlogReadingTime.objects.all()
+    serializer_class = BlogReadingTimeSerializer 
+    permission_classes = [permissions.IsAuthenticated] 
+
+class BlogWatchTimeListCreateAPIView(generics.ListCreateAPIView):
+    queryset = BlogWatchTime.objects.all()
+    serializer_class = BlogWatchTimeSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+
+class BlogWatchTimeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = BlogWatchTime.objects.all()
+    serializer_class = BlogWatchTimeSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+    

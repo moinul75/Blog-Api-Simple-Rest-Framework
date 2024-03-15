@@ -2,7 +2,9 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status 
-from .serializers import RegistrationSerializer ,LoginSerializer
+from .serializers import RegistrationSerializer ,LoginSerializer,ProfileSerializer 
+from .models import CustomUser,Profile 
+from rest_framework import generics,permissions,pagination,filters 
 
 # Create your views here.
 class RegistrationApi(APIView):
@@ -56,4 +58,18 @@ class LoginApi(APIView):
                 },status=status.HTTP_400_BAD_REQUEST
             )
        
+class ProfileListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer 
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return []
+        else:
+            return [permissions.IsAuthenticated()]
+    
+class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer 
+    permission_classes = [permissions.IsAuthenticated]
+    
             

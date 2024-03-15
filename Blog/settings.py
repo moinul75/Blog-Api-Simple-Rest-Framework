@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'Account',
     'Home',
     'rest_framework',
+    #third party api 
 ]
 
 MIDDLEWARE = [
@@ -136,6 +137,14 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
        
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_RENDERER_CLASSES': [
+    'rest_framework.renderers.JSONRenderer',
+    'rest_framework.renderers.BrowsableAPIRenderer',  # Make sure this is included
+    ],
    
-}
+} 
+
+
+#auth user models 
+AUTH_USER_MODEL = 'Account.CustomUser'
