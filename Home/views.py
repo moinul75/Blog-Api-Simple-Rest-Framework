@@ -46,7 +46,7 @@ class BlogListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = BlogSerializer 
     search_fields = ['title', 'blog_text']
     filter_backends = [filters.SearchFilter] 
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
     def get_permissions(self):
         if self.request.method == 'GET':
             return []
