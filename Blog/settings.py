@@ -152,4 +152,4 @@ REST_FRAMEWORK = {
 AUTH_USER_MODEL = 'Account.CustomUser' 
 
 #cors 
-CORS_ALLOWED_ORIGINS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True 
