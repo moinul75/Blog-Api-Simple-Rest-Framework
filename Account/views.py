@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status 
-from .serializers import RegistrationSerializer ,LoginSerializer,ProfileSerializer 
+from .serializers import RegistrationSerializer ,LoginSerializer,ProfileSerializer ,CustomUserSerializer
 from .models import CustomUser,Profile 
 from rest_framework import generics,permissions,pagination,filters 
 from rest_framework.permissions import IsAuthenticated 
@@ -58,6 +58,19 @@ class LoginApi(APIView):
                     'message':'Something is went Wrong...'
                 },status=status.HTTP_400_BAD_REQUEST
             )
+            
+class CustomUserListCreateAPIView(ListCreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+class CustomUserRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
        
 class ProfileListCreateAPIView(ListCreateAPIView):
     queryset = Profile.objects.all()

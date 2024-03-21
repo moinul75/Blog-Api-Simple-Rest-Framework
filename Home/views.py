@@ -106,5 +106,5 @@ class BlogWatchTimeListCreateAPIView(generics.ListCreateAPIView):
 class BlogWatchTimeRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BlogWatchTime.objects.all()
     serializer_class = BlogWatchTimeSerializer 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated] 
     
