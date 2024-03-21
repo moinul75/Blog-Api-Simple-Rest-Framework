@@ -5,7 +5,8 @@ from rest_framework import status
 from .serializers import RegistrationSerializer ,LoginSerializer,ProfileSerializer 
 from .models import CustomUser,Profile 
 from rest_framework import generics,permissions,pagination,filters 
-
+from rest_framework.permissions import IsAuthenticated 
+from rest_framework.generics import ListCreateAPIView,RetrieveUpdateDestroyAPIView
 # Create your views here.
 class RegistrationApi(APIView):
     def post(self,request):
@@ -58,18 +59,20 @@ class LoginApi(APIView):
                 },status=status.HTTP_400_BAD_REQUEST
             )
        
-class ProfileListCreateAPIView(generics.ListCreateAPIView):
+class ProfileListCreateAPIView(ListCreateAPIView):
     queryset = Profile.objects.all()
-    serializer_class = ProfileSerializer 
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return []
-        else:
-            return [permissions.IsAuthenticated()]
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
     
-class ProfileRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    def get_queryset(self):
+        return Profile.objects.filter(user=self.request.user)
+
+class ProfileRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Profile.objects.all()
-    serializer_class = ProfileSerializer 
-    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Profile.objects.filter(user=self.request.user)
     
             
